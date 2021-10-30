@@ -24,11 +24,8 @@ def load_config(exp_id):
     save_path: results will be saved at this location
     dataset_path: dataset must be stored here.
     '''
-    cfg.save_path = None  # UPDATE HERE <<<<<<<<<<<<<<<<<<<<<<
-    cfg.dataset_path = None  # UPDATE HERE <<<<<<<<<<<<<<<<<<<<<<
-
-    # cfg.save_path = '/your/path/to/experiments/miccai2020/' # results will be saved here
-    # cfg.dataset_path = '/your/path/to/dataset' # path to the dataset
+    cfg.save_path = './runs/'
+    cfg.dataset_path = '.data/'
 
     # Initialize data object for.
     # Hippocampus() for hippocampus and Chaos() for liver dataset.
