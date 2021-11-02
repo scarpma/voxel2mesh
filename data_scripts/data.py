@@ -149,6 +149,10 @@ def get_item(item, mode, config):
 
 
 def sample_outer_surface_in_voxel(volume):
+
+    # grows a layer of voxels around the volume, like an outer voxelized surface.
+    # returns the volume array with ones on these "surface" voxels.
+
     # inner surface
     # a = F.max_pool3d(-volume[None,None].float(), kernel_size=(3,1,1), stride=1, padding=(1, 0, 0))[0]
     # b = F.max_pool3d(-volume[None,None].float(), kernel_size=(1,3, 1), stride=1, padding=(0, 1, 0))[0]
