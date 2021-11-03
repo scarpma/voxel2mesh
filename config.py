@@ -1,9 +1,7 @@
 import numpy as np
 import torch
 
-from data.chaos import Chaos
-from data.hippocampus import Hippocampus
-
+from dsets import *
 
 class Config():
     def __init__(self):

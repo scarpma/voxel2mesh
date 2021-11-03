@@ -17,10 +17,10 @@ from diskcache import FanoutCache
 # from util.disk import getCache
 from boltons.cacheutils import cachedproperty
 import functools
-from util.logconf import logging
 
 # TORCH
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 import model
 
@@ -38,11 +38,6 @@ ROI_IS_mm_n = 180 # below arch
 FINAL_SIZE = [384,320,256]
 # px spacing : array([ 0.55989583 , 0.5625 , 0.5625 ])
 
-log = logging.getLogger(__name__)
-# log.setLevel(logging.WARN)
-# log.setLevel(logging.INFO)
-log.setLevel(logging.DEBUG)
-
 
 #raw_cache = getCache(osp.join(DICOM_DIR, '.raw'))
 raw_cache = FanoutCache(osp.join(CACHE_DIR, 'cache'),
@@ -52,6 +47,7 @@ raw_cache = FanoutCache(osp.join(CACHE_DIR, 'cache'),
     size_limit=3e11,
     # disk_min_file_size=2**20,
 )
+
 
 
 @functools.lru_cache(1)
@@ -73,7 +69,7 @@ def getPatientArchive(root_dir=DICOM_DIR):
 
 def buildPatientArchive(root_dir=DICOM_DIR, new_archive_bool=False):
     archive_file = osp.join(root_dir,'patients.csv')
-    patient_dir_list = glob.glob(osp.join(root_dir, '*/'))
+    patient_dir_list = glob.glob(osp.join(root_dir, '*/[!ROI_arrays]'))
     if not osp.exists(archive_file): new_archive_bool = True
     archive_cols = ['name',
         'series_uid','size','vxSize_xyz',
@@ -88,6 +84,9 @@ def buildPatientArchive(root_dir=DICOM_DIR, new_archive_bool=False):
         patient_dir_list = [pat for pat in patient_dir_list if
             not pat_name_from_dir(pat) in archive['name'].values
         ]
+        if len(patient_dir_list) >= 1:
+            print("new patients to add:")
+            print(patient_dir_list)
 
     ## ADD NEW PATIENTS TO ARCHIVE
     for ii, patient_dir in enumerate(patient_dir_list):
@@ -231,7 +230,7 @@ class Ct(object):
         dicom_files_ordered = [dicom_files[i] for i in idxs]
 
         if np.diff(positions[:,2]).ptp() > 0.05:
-            log.warning('detected slice distance mismatch in {} of {} mm'.format(
+            print('detected slice distance mismatch in {} of {} mm'.format(
                 self.patient_name, np.diff(positions[:,2]).ptp()))
 
         return dicom_files_ordered
@@ -399,18 +398,17 @@ def plot_mosaic(img_list):
 
 
 
-class Segmentation2DDataset(Dataset):
+class SegmentationDataset(Dataset):
     def __init__(self,
                  val_stride=0,
                  isValSet_bool=None,
                  patient_name=None,
             ):
-        self.contextSlices_count = contextSlices_count
         self.archive = getPatientArchive().set_index('name', drop=False)
 
-        self.n_slices = slices_options[self.proj]
-        self.n_rows = rows_options[self.proj]
-        self.n_cols = cols_options[self.proj]
+        self.n_slices = FINAL_SIZE[0]
+        self.n_rows = FINAL_SIZE[1]
+        self.n_cols = FINAL_SIZE[2]
 
         ## BUILD PATIENT LIST AS A SUBSET OF PATIENT NAMES FROM ARCHIVE
         if patient_name:
@@ -431,9 +429,9 @@ class Segmentation2DDataset(Dataset):
         ## FOR ALL SLICES FROM ALL PATIENT IN PATIENT_LIST
         self.sample_list = []
         for patient_name in self.patients_list:
-            self.sample_list += [(patient_name, 0)]
+            self.sample_list += [patient_name]
 
-        log.info("{!r}: {} {} series".format(
+        print("{!r}: {} {} series".format(
             self,
             len(self.patients_list),
             {None: 'general', True: 'validation', False: 'training'}[isValSet_bool],
@@ -457,8 +455,9 @@ class Segmentation2DDataset(Dataset):
 
         ## this function call should be cached in disk
         x, y = getResampledRoi(patient_name)
-        x = torch.from_numpy(x).unsqueeze(0)
-        y = torch.from_numpy(y).unsqueeze(0)
+        shape = torch.tensor(y.shape)[None].float()
+        x = torch.from_numpy(x[0]).unsqueeze(-1)
+        y = torch.from_numpy(y[0]).unsqueeze(-1)
 
         ## WINDOWING
         x.clamp_(HU_BOTTOM_LIM, HU_TOP_LIM)
@@ -483,7 +482,7 @@ class Segmentation2DDataset(Dataset):
         return {
             "x": x,
             "y_voxels": y,
-            "surface_points": surface_points,
+            "surface_points": surface_points_normalized,
         }
 
 
@@ -524,6 +523,8 @@ def normalize_vertices(vertices, shape):
         shape.shape) == 2, "Inputs must be 2 dim"
     assert shape.shape[0] == 1, "first dim of shape should be length 1"
 
+    print(shape)
+    print(torch.max(vertices))
     return 2 * (vertices / (torch.max(shape) - 1) - 0.5)
 
 
@@ -577,7 +578,7 @@ def prepCache():
 
 if __name__ == '__main__':
 
-    buildPatientArchive()
+    ## buildPatientArchive()
 
     ##if True:
     ##    #raw_cache.clear()
@@ -607,10 +608,15 @@ if __name__ == '__main__':
     ##        }
     ##        np.save(save_path, array_tosave)
 
+    ds = SegmentationDataset()
+    a = ds[0]
+    print(a)
+    print(torch.max(a['surface_points']))
+
 
 ## import scipy.ndimage as nd
 ## import pyvista as pv
-## 
+##
 ## def marching_cubes(array):
 ##     array = array.squeeze()
 ##     assert len(array.shape)==3
@@ -622,7 +628,7 @@ if __name__ == '__main__':
 ##             progress_bar=True,
 ##     )
 ##     return contour
-## 
+##
 ## # from resampled roi to
 ## surf = marching_cubes(mask.transpose((2,1,0)))
 ## mini,maxi,minr,maxr,minc,maxc = ct.roi_bounds
