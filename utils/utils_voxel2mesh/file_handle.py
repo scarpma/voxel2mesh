@@ -1,27 +1,28 @@
 import numpy as np
 import torch
-  
+
 import time
 from IPython import embed
-from scipy.io import savemat 
+from scipy.io import savemat
+
 
 def read_obj(filepath):
     vertices = []
-    faces = [] 
-    normals = []   
+    faces = []
+    normals = []
     with open(filepath) as fp:
-        line = fp.readline() 
-        cnt = 1 
-        while line: 
-            if line[0] is not '#': 
-                cnt = cnt + 1 
-                values = [float(x) for x in line.split('\n')[0].split(' ')[1:]] 
-                if line[:2] == 'vn':  
+        line = fp.readline()
+        cnt = 1
+        while line:
+            if line[0] is not '#':
+                cnt = cnt + 1
+                values = [float(x) for x in line.split('\n')[0].split(' ')[1:]]
+                if line[:2] == 'vn':
                     normals.append(values)
                 elif line[0] == 'v':
                     vertices.append(values)
                 elif line[0] == 'f':
-                    faces.append(values) 
+                    faces.append(values)
             line = fp.readline()
         vertices = np.array(vertices)
         normals = np.array(normals)
@@ -33,7 +34,7 @@ def read_obj(filepath):
             return vertices, faces
 
 
-def save_to_obj(filepath, points, faces, normals=None): 
+def save_to_obj(filepath, points, faces, normals=None):
     with open(filepath, 'w') as file:
         vals = ''
         for i, point in enumerate(points[0]):
@@ -46,5 +47,5 @@ def save_to_obj(filepath, points, faces, normals=None):
         if len(faces) > 0:
             for i, face in enumerate(faces[0]):
                 face = face.data.cpu().numpy()
-                vals += 'f ' + ' '.join([str(val+1) for val in face]) + '\n'
+                vals += 'f ' + ' '.join([str(val + 1) for val in face]) + '\n'
         file.write(vals)

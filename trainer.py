@@ -48,7 +48,7 @@ class Trainer:
         self.trn_writer = None
         self.val_writer = None
 
-        self.aug_model = SegmentationAugmentation(**self.aug_dict)
+        #self.aug_model = SegmentationAugmentation(**self.aug_dict)
 
         self.use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if self.use_cuda else "cpu")
@@ -57,9 +57,9 @@ class Trainer:
             print("Using CUDA; {} devices.".format(torch.cuda.device_count()))
             if torch.cuda.device_count() > 1:
                 self.segmentation_model = nn.DataParallel(self.segmentation_model)
-                self.aug_model = nn.DataParallel(self.aug_model)
+                #self.aug_model = nn.DataParallel(self.aug_model)
             self.segmentation_model = self.segmentation_model.to(self.device)
-            self.aug_model = self.aug_model.to(self.device)
+            #self.aug_model = self.aug_model.to(self.device)
 
 
 

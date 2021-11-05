@@ -29,12 +29,21 @@ class Voxel2Mesh(nn.Module):
     def __init__(self,
         ndims,
         batch_size,
-        num_input_channel,
+        num_input_channels,
         first_layer_channels,
         steps,
         num_classes,
         graph_conv_layer_count,
+        batch_norm,
+        config,
     ):
+        self.ndims = ndims
+        self.batch_size = batch_size
+        self.num_input_channels = num_input_channels
+        self.first_layer_channels = first_layer_channels
+        self.steps = steps
+        self.num_classes = num_classes
+        self.graph_conv_layer_count = graph_conv_layer_count
         super(Voxel2Mesh, self).__init__()
 
         self.max_pool = nn.MaxPool3d(2) if ndims == 3 else nn.MaxPool2d(
@@ -50,8 +59,8 @@ class Voxel2Mesh(nn.Module):
         ]
         for i in range(1, steps + 1):
             graph_conv_layer = UNetLayer(
-                config.first_layer_channels * 2**(i - 1),
-                config.first_layer_channels * 2**i, ndims)
+                first_layer_channels * 2**(i - 1),
+                first_layer_channels * 2**i, ndims)
             down_layers.append(graph_conv_layer)
         self.down_layers = down_layers
         self.encoder = nn.Sequential(*down_layers)
@@ -94,19 +103,19 @@ class Voxel2Mesh(nn.Module):
                     kernel_size=2,
                     stride=2)
                 grid_unet_layer = UNetLayer(
-                    config.first_layer_channels * 2**(config.steps - i + 1),
-                    config.first_layer_channels * 2**(config.steps - i),
-                    config.ndims, config.batch_norm)
-                for k in range(config.num_classes - 1):
+                    first_layer_channels * 2**(steps - i + 1),
+                    first_layer_channels * 2**(steps - i),
+                    ndims, batch_norm)
+                for k in range(num_classes - 1):
                     graph_unet_layers += [
                         Features2Features(
                             self.skip_count[i] +
                             self.latent_features_coount[i - 1] + dim,
                             self.latent_features_coount[i],
-                            hidden_layer_count=config.graph_conv_layer_count)
-                    ]  #, graph_conv=GraphConv if i < config.steps else GraphConvNoNeighbours
+                            hidden_layer_count=graph_conv_layer_count)
+                    ]  #, graph_conv=GraphConv if i < steps else GraphConvNoNeighbours
 
-            for k in range(config.num_classes - 1):
+            for k in range(num_classes - 1):
                 feature2vertex_layers += [
                     Feature2VertexLayer(self.latent_features_coount[i], 3)
                 ]
@@ -124,8 +133,8 @@ class Voxel2Mesh(nn.Module):
         self.decoder_f2f = nn.Sequential(*chain(*up_f2f_layers))
         self.decoder_f2v = nn.Sequential(*chain(*up_f2v_layers))
         ''' Final layer (for voxel decoder)'''
-        self.final_layer = ConvLayer(in_channels=config.first_layer_channels,
-                                     out_channels=config.num_classes,
+        self.final_layer = ConvLayer(in_channels=first_layer_channels,
+                                     out_channels=num_classes,
                                      kernel_size=1)
 
         sphere_path = './spheres/icosahedron_{}.obj'.format(162)
@@ -143,7 +152,7 @@ class Voxel2Mesh(nn.Module):
         sphere_vertices = self.sphere_vertices.clone()
         vertices = sphere_vertices.clone()
         faces = self.sphere_faces.clone()
-        batch_size = self.config.batch_size
+        batch_size = self.batch_size
 
         # first layer
         x = self.down_layers[0](x)
@@ -156,8 +165,8 @@ class Voxel2Mesh(nn.Module):
             down_outputs.append(x)
 
         A, D = adjacency_matrix(vertices, faces)
-        pred = [None] * self.config.num_classes
-        for k in range(self.config.num_classes - 1):
+        pred = [None] * self.num_classes
+        for k in range(self.num_classes - 1):
             pred[k] = [[
                 vertices.clone(),
                 faces.clone(), None, None,
@@ -177,7 +186,7 @@ class Voxel2Mesh(nn.Module):
             elif grid_upconv_layer is None:
                 x = down_output
 
-            for k in range(self.config.num_classes - 1):
+            for k in range(self.num_classes - 1):
 
                 # load mesh information from previous iteratioin for class k
                 vertices = pred[k][i][0]

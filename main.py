@@ -93,19 +93,20 @@ shuffle_bool = True
 num_workers = 2
 batch_size = 1
 epochs = 20
+lr = 1.e-4
 
 run_name = 'prova1'
 
 #print(args)
 
 
-
-
 def init(cfg):
 
-    save_path = osp.join(RUNS_DIR, cfg.save_dir_prefix + str(
-        cfg.experiment_idx).zfill(3))
+    save_path = osp.join(
+        RUNS_DIR, cfg.save_dir_prefix + str(cfg.experiment_idx).zfill(3))
 
+    if osp.exists(save_path):
+        os.system(f'rm -rf {save_path}')
     os.mkdir(save_path)
 
     trial_id = (len([dir for dir in os.listdir(save_path) if 'trial' in dir]) +
@@ -134,9 +135,11 @@ exp_id = 0
 # Initialize
 cfg = load_config(exp_id)
 trial_path, trial_id = init(cfg)
-print('Experiment ID: {}, Trial ID: {}'.format(cfg.experiment_idx,
-                                                   trial_id))
+print('Experiment ID: {}, Trial ID: {}'.format(cfg.experiment_idx, trial_id))
 
+classifier = network(cfg.ndims, cfg.batch_size, cfg.num_input_channels,
+                     cfg.first_layer_channels, cfg.steps, cfg.num_classes,
+                     cfg.graph_conv_layer_count, cfg.batch_norm, cfg)
 
 print("Load pre-processed data")
 trn_dset = SegmentationDataset(10, isValSet_bool=False)
@@ -148,7 +151,11 @@ val_dset = SegmentationDataset(10, isValSet_bool=True)
 print("Initialize trainer")
 trainer = Trainer(classifier, trn_dset, val_dset, tb_prefix=run_name)
 
-trainer.train(epochs,batch_size,num_workers=num_workers, shuffle_bool=shuffle_bool, lr=lr)
+trainer.train(epochs,
+              batch_size,
+              num_workers=num_workers,
+              shuffle_bool=shuffle_bool,
+              lr=lr)
 
 # To evaluate a pretrained model, uncomment line below and comment the line above
 # evaluator.evaluate(epoch)

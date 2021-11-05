@@ -38,11 +38,8 @@ def load_config(exp_id):
     cfg.num_classes = 2
     cfg.batch_norm = True
     cfg.graph_conv_layer_count = 4
-    ''' Optimizer '''
-    cfg.learning_rate = 1e-4
-    ''' Training '''
-    cfg.numb_of_itrs = 300000
-    cfg.eval_every = 1000  # saves results to disk
+    #cfg.numb_of_itrs = 300000
+    #cfg.eval_every = 1000  # saves results to disk
 
     # ''' Rreporting '''
     # cfg.wab = True # use weight and biases for reporting
