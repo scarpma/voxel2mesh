@@ -33,7 +33,7 @@ METRIC_LAP_IDX  = 6 # laplacian
 
 METRICS_SIZE = 7
 
-RUNS_DIR = 'runs'
+RUNS_DIR = '../voxel2meshRuns'
 
 class Trainer:
     def __init__(self, seg_model, train_ds, val_ds, tb_prefix='', aug_dict={}):

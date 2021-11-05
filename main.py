@@ -1,11 +1,14 @@
 from config import load_config
 import torch
 import numpy as np
-from trainer import Trainer
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from dsets import *
+from trainer import *
 from model.voxel2mesh import Voxel2Mesh as network
+
+from utils.utils_common import mkdir
+from shutil import copytree, ignore_patterns
 
 #import argparse
 #
@@ -93,17 +96,17 @@ epochs = 20
 
 run_name = 'prova1'
 
-print(args)
+#print(args)
 
 
 
 
 def init(cfg):
 
-    save_path = cfg.save_path + cfg.save_dir_prefix + str(
-        cfg.experiment_idx).zfill(3)
+    save_path = osp.join(RUNS_DIR, cfg.save_dir_prefix + str(
+        cfg.experiment_idx).zfill(3))
 
-    mkdir(save_path)
+    os.mkdir(save_path)
 
     trial_id = (len([dir for dir in os.listdir(save_path) if 'trial' in dir]) +
                 1) if cfg.trial_id is None else cfg.trial_id
@@ -127,7 +130,7 @@ def init(cfg):
     return trial_save_path, trial_id
 
 
-exp_id = 3
+exp_id = 0
 # Initialize
 cfg = load_config(exp_id)
 trial_path, trial_id = init(cfg)
@@ -136,8 +139,8 @@ print('Experiment ID: {}, Trial ID: {}'.format(cfg.experiment_idx,
 
 
 print("Load pre-processed data")
-trn_dset = dsets.SegmentationDataset(10, isValSet_bool=False)
-val_dset = dsets.SegmentationDataset(10, isValSet_bool=True)
+trn_dset = SegmentationDataset(10, isValSet_bool=False)
+val_dset = SegmentationDataset(10, isValSet_bool=True)
 
 #print("Initialize evaluator")
 #evaluator = Evaluator(classifier, optimizer, data, trial_path, cfg, data_obj)

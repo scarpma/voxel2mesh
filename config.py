@@ -17,24 +17,7 @@ def load_config(exp_id):
 
     cfg.save_dir_prefix = 'Experiment_'  # prefix for experiment folder
     cfg.name = 'voxel2mesh'
-    '''
-    **************************************** Paths ****************************************
-    save_path: results will be saved at this location
-    dataset_path: dataset must be stored here.
-    '''
-    cfg.save_path = './runs/'
-    cfg.dataset_path = '.data/'
 
-    # Initialize data object for.
-    # Hippocampus() for hippocampus and Chaos() for liver dataset.
-
-    cfg.data_obj = None  # UPDATE HERE <<<<<<<<<<<<<<<<<<<<<<
-    # cfg.data_obj = Chaos()
-    # cfg.data_obj = Hippocampus()
-
-    assert cfg.save_path != None, "Set cfg.save_path in config.py"
-    assert cfg.dataset_path != None, "Set cfg.dataset_path in config.py"
-    assert cfg.data_obj != None, "Set cfg.data_obj in config.py"
     '''
     ************************************************************************************************
     '''

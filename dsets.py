@@ -25,8 +25,8 @@ from torch.utils.data import Dataset
 import model
 
 #DICOM_DIR = '/home/scarpma/db/dicom_files_MARTINO_NON_MODIFICARE/'
-DICOM_DIR = './data/'
-CACHE_DIR = './cache_data/'
+DICOM_DIR = '../voxel2meshRuns/'
+CACHE_DIR = '../voxel2meshData/.cache_data'
 
 HU_BOTTOM_LIM, HU_TOP_LIM = -200, 800
 THRESHOLD = 0.5
