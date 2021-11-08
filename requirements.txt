@@ -1,6 +1,13 @@
 ## conda create -n pytorch3d python=3.8
 conda install -c pytorch pytorch=1.7.1 torchvision cudatoolkit=10.2
 
+## BCL-LOVELACE
+## conda create -n pytorch3d python=3.8
+## conda install -c nvidia cudatoolkit=11.1.74
+## conda install -c pytorch pytorch=1.9.1=py3.8_cuda11.1_cudnn8.0.5_0
+## ...
+## pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py38_cu111_pyt191/download.html
+
 ### pytorch3d
 conda install -c fvcore -c iopath -c conda-forge fvcore iopath
 conda install -c bottler nvidiacub
