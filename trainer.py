@@ -190,8 +190,8 @@ class Trainer:
                          classificationThreshold=0.5):
 
         data['x'] = data['x'].to(self.device, non_blocking=True)
-        data['y_voxels'] = data['x'].to(self.device, non_blocking=True)
-        data['surface_points'] = data['x'].to(self.device, non_blocking=True)
+        data['y_voxels'] = data['y_voxels'].to(self.device, non_blocking=True)
+        data['surface_points'] = data['surface_points'].to(self.device, non_blocking=True)
 
         ## if self.segmentation_model.training and self.aug_dict:
         ##     input_g, label_g = self.aug_model(input_g, label_g)

@@ -456,8 +456,8 @@ class SegmentationDataset(Dataset):
         ## this function call should be cached in disk
         x, y = getResampledRoi(patient_name)
         shape = torch.tensor(y.shape)[None].float()
-        x = torch.from_numpy(x).unsqueeze(-1)
-        y = torch.from_numpy(y).unsqueeze(-1)
+        x = torch.from_numpy(x).unsqueeze(-1) # add channels axis
+        y = torch.from_numpy(y)
 
         ## WINDOWING
         x.clamp_(HU_BOTTOM_LIM, HU_TOP_LIM)
@@ -481,7 +481,7 @@ class SegmentationDataset(Dataset):
 
         return {
             "x": x.swapaxes(-1,-4),
-            "y_voxels": y.swapaxes(-1,-4),
+            "y_voxels": y,
             "surface_points": surface_points_normalized,
             "unpool": [0, 1, 0, 1, 0],
         }
