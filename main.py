@@ -90,7 +90,7 @@ from shutil import copytree, ignore_patterns
 ## wf = args.wf
 ## lr = args.lr
 shuffle_bool = True
-num_workers = 2
+num_workers = 0
 batch_size = 1
 epochs = 20
 lr = 1.e-4

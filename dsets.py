@@ -456,8 +456,8 @@ class SegmentationDataset(Dataset):
         ## this function call should be cached in disk
         x, y = getResampledRoi(patient_name)
         shape = torch.tensor(y.shape)[None].float()
-        x = torch.from_numpy(x[0]).unsqueeze(-1)
-        y = torch.from_numpy(y[0]).unsqueeze(-1)
+        x = torch.from_numpy(x).unsqueeze(-1)
+        y = torch.from_numpy(y).unsqueeze(-1)
 
         ## WINDOWING
         x.clamp_(HU_BOTTOM_LIM, HU_TOP_LIM)
@@ -480,9 +480,10 @@ class SegmentationDataset(Dataset):
         ]  # randomly pick 3000 points
 
         return {
-            "x": x,
-            "y_voxels": y,
+            "x": x.swapaxes(-1,-4),
+            "y_voxels": y.swapaxes(-1,-4),
             "surface_points": surface_points_normalized,
+            "unpool": [0, 1, 0, 1, 0],
         }
 
 
@@ -500,15 +501,15 @@ def sample_outer_surface_in_voxel(volume):
     # surface = border + volume.float()
 
     # outer surface
-    a = F.max_pool3d(volume[None, None].float(),
+    a = F.max_pool3d(volume[None].float(),
                      kernel_size=(3, 1, 1),
                      stride=1,
                      padding=(1, 0, 0))[0]
-    b = F.max_pool3d(volume[None, None].float(),
+    b = F.max_pool3d(volume[None].float(),
                      kernel_size=(1, 3, 1),
                      stride=1,
                      padding=(0, 1, 0))[0]
-    c = F.max_pool3d(volume[None, None].float(),
+    c = F.max_pool3d(volume[None].float(),
                      kernel_size=(1, 1, 3),
                      stride=1,
                      padding=(0, 0, 1))[0]

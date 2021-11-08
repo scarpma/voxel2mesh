@@ -189,7 +189,9 @@ class Trainer:
     def computeBatchLoss(self, batch_ndx, data, batch_size, metrics_g,
                          classificationThreshold=0.5):
 
-        data = data.to(self.device, non_blocking=True)
+        data['x'] = data['x'].to(self.device, non_blocking=True)
+        data['y_voxels'] = data['x'].to(self.device, non_blocking=True)
+        data['surface_points'] = data['x'].to(self.device, non_blocking=True)
 
         ## if self.segmentation_model.training and self.aug_dict:
         ##     input_g, label_g = self.aug_model(input_g, label_g)
