@@ -320,7 +320,6 @@ class Ct(object):
             cval=0)
         int_labelmap_roi = int_labelmap_roi > THRESHOLD
         int_labelmap_roi = int_labelmap_roi.astype(np.int32)
-        print(hu_a_roi.shape)
         return hu_a_roi, int_labelmap_roi
 
     def getMetadata(self, dcmFilename):
@@ -470,19 +469,16 @@ class SegmentationDataset(Dataset):
         surface_points = torch.nonzero(y_outer)
         surface_points = torch.flip(
             surface_points, dims=[1]).float()  # convert z,y,x -> x, y, z
-        surface_points_normalized = normalize_vertices(surface_points, shape)
+        surface_points_norm = normalize_vertices(surface_points, shape)
 
-        perm = torch.randperm(len(surface_points_normalized))
+        perm = torch.randperm(len(surface_points_norm))
         point_count = 3000
-        surface_points_normalized_all += [
-            surface_points_normalized[
-                perm[:np.min([len(perm), point_count])]].cuda()
-        ]  # randomly pick 3000 points
+        surface_point_norm = surface_points_norm[perm[:np.min([len(perm), point_count])]] # randomly pick 3000 points
 
         return {
-            "x": x.swapaxes(-1,-4),
+            "x": x.moveaxis(-1,0),
             "y_voxels": y,
-            "surface_points": surface_points_normalized,
+            "surface_points": surface_point_norm,
             "unpool": [0, 1, 0, 1, 0],
         }
 
@@ -524,8 +520,6 @@ def normalize_vertices(vertices, shape):
         shape.shape) == 2, "Inputs must be 2 dim"
     assert shape.shape[0] == 1, "first dim of shape should be length 1"
 
-    print(shape)
-    print(torch.max(vertices))
     return 2 * (vertices / (torch.max(shape) - 1) - 0.5)
 
 

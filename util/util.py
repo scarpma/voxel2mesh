@@ -144,7 +144,7 @@ def enumerateWithEstimate(
         iter,
         desc_str,
         start_ndx=0,
-        print_ndx=4,
+        print_ndx=2,
         backoff=None,
         iter_len=None,
 ):

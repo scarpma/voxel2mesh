@@ -76,7 +76,8 @@ class Trainer:
             self.train_ds,
             batch_size=batch_size,
             num_workers=num_workers,
-            pin_memory=self.use_cuda,
+            #pin_memory=self.use_cuda,
+            pin_memory=False,
         )
 
         return train_dl
@@ -91,7 +92,8 @@ class Trainer:
             self.val_ds,
             batch_size=batch_size,
             num_workers=num_workers,
-            pin_memory=self.use_cuda,
+            #pin_memory=self.use_cuda,
+            pin_memory=False,
         )
 
         return val_dl
@@ -137,8 +139,8 @@ class Trainer:
 
                 self.saveModel('seg', epoch_ndx, score == best_score, epoch_ndx == epochs)
 
-                self.logImages(epoch_ndx, 'trn', train_dl)
-                self.logImages(epoch_ndx, 'val', val_dl)
+                #self.logImages(epoch_ndx, 'trn', train_dl)
+                #self.logImages(epoch_ndx, 'val', val_dl)
 
         self.trn_writer.close()
         self.val_writer.close()
@@ -155,10 +157,10 @@ class Trainer:
             "E{} Training".format(epoch_ndx),
             start_ndx=train_dl.num_workers,
         )
-        for batch_ndx, batch_tup in batch_iter:
+        for batch_idx, batch_tup in batch_iter:
             self.optimizer.zero_grad()
 
-            loss_var = self.computeBatchLoss(batch_ndx, batch_tup, train_dl.batch_size, trnMetrics_g)
+            loss_var = self.computeBatchLoss(batch_idx, batch_tup, train_dl.batch_size, trnMetrics_g)
             loss_var.backward()
 
             self.optimizer.step()
@@ -186,7 +188,7 @@ class Trainer:
 
 
 
-    def computeBatchLoss(self, batch_ndx, data, batch_size, metrics_g,
+    def computeBatchLoss(self, batch_idx, data, batch_size, metrics,
                          classificationThreshold=0.5):
 
         data['x'] = data['x'].to(self.device, non_blocking=True)
@@ -200,14 +202,14 @@ class Trainer:
         # embed()
 
         CE_Loss = nn.CrossEntropyLoss()
-        ce_loss = CE_Loss(pred[0][-1][3], data['y_voxels'])
+        ce_loss = CE_Loss(pred[0][-1][3], data['y_voxels'].long())
 
-        chamfer_loss = torch.tensor(0).float().cuda()
-        edge_loss = torch.tensor(0).float().cuda()
-        laplacian_loss = torch.tensor(0).float().cuda()
-        normal_consistency_loss = torch.tensor(0).float().cuda()
+        chamfer_loss = torch.tensor(0).float().to(self.device)
+        edge_loss = torch.tensor(0).float().to(self.device)
+        laplacian_loss = torch.tensor(0).float().to(self.device)
+        normal_consistency_loss = torch.tensor(0).float().to(self.device)
 
-        target = data['surface_points'][0].cuda()
+        target = data['surface_points']
         for k, (vertices, faces, _, _, _) in enumerate(pred[0][1:]):
 
             pred_mesh = Meshes(verts=list(vertices), faces=list(faces))
@@ -221,12 +223,12 @@ class Trainer:
 
         loss = 1 * chamfer_loss + 1 * ce_loss + 0.1 * laplacian_loss + 1 * edge_loss + 0.1 * normal_consistency_loss
 
-        metrics[METRIC_LOSS_IDX] = loss.detach(),
-        metrics[METRIC_CF_IDX] = chamfer_loss.detach(),
-        metrics[METRIC_CE_IDX] = ce_loss.detach(),
-        metrics[METRIC_N_IDX] = normal_consistency_loss.detach(),
-        metrics[METRIC_E_IDX] = edge_loss.detach(),
-        metrics[METRIC_LAP_IDX] = laplacian_loss.detach(),
+        metrics[METRIC_LOSS_IDX,batch_idx] = loss.detach()
+        metrics[METRIC_CF_IDX,batch_idx] = chamfer_loss.detach()
+        metrics[METRIC_CE_IDX,batch_idx] = ce_loss.detach()
+        metrics[METRIC_N_IDX,batch_idx] = normal_consistency_loss.detach()
+        metrics[METRIC_E_IDX,batch_idx] = edge_loss.detach()
+        metrics[METRIC_LAP_IDX,batch_idx] = laplacian_loss.detach()
 
         return loss
 
@@ -314,50 +316,28 @@ class Trainer:
 
 
 
-    def logMetrics(self, epoch_ndx, mode_str, metrics_t):
+    def logMetrics(self, epoch_ndx, mode_str, metrics):
 
-        metrics_a = metrics_t.detach().numpy()
-        sum_a = metrics_a.sum(axis=1)
-        assert np.isfinite(metrics_a).all()
-
-        allLabel_count = sum_a[METRICS_TP_NDX] + sum_a[METRICS_FN_NDX]
+        metrics = metrics.detach().numpy()
+        metrics_sum = metrics.sum(axis=1)
+        assert np.isfinite(metrics).all()
 
         metrics_dict = {}
-        metrics_dict['loss/all'] = metrics_a[METRICS_LOSS_NDX].mean()
-
-        metrics_dict['percent_all/tp'] = \
-            sum_a[METRICS_TP_NDX] / (allLabel_count or 1) * 100
-        metrics_dict['percent_all/fn'] = \
-            sum_a[METRICS_FN_NDX] / (allLabel_count or 1) * 100
-        metrics_dict['percent_all/fp'] = \
-            sum_a[METRICS_FP_NDX] / (allLabel_count or 1) * 100
-
-
-        precision = metrics_dict['pr/precision'] = sum_a[METRICS_TP_NDX] \
-            / ((sum_a[METRICS_TP_NDX] + sum_a[METRICS_FP_NDX]) or 1)
-        recall    = metrics_dict['pr/recall']    = sum_a[METRICS_TP_NDX] \
-            / ((sum_a[METRICS_TP_NDX] + sum_a[METRICS_FN_NDX]) or 1)
-
-        metrics_dict['pr/f1_score'] = 2 * (precision * recall) \
-            / ((precision + recall) or 1)
+        metrics_dict['total_loss/all'] = metrics[METRICS_LOSS_IDX].mean()
+        metrics_dict['cross_entropy/all'] = metrics[METRICS_CE_IDX].mean()
+        metrics_dict['chamfer/all'] = metrics[METRICS_CF_IDX].mean()
+        metrics_dict['normal/all'] = metrics[METRICS_N_IDX].mean()
+        metrics_dict['edge/all'] = metrics[METRICS_E_IDX].mean()
+        metrics_dict['laplacian/all'] = metrics[METRICS_LAP_IDX].mean()
 
         print(("E{} {:8} "
-                 + "{loss/all:.4f} loss, "
-                 + "{pr/precision:.4f} precision, "
-                 + "{pr/recall:.4f} recall, "
-                 + "{pr/f1_score:.4f} f1 score"
+                 + "{:.4f} loss, "
+                 + "{}"
                   ).format(
             epoch_ndx,
             mode_str,
-            **metrics_dict,
-        ))
-        print(("E{} {:8} "
-                  + "{loss/all:.4f} loss, "
-                  + "{percent_all/tp:-5.1f}% tp, {percent_all/fn:-5.1f}% fn, {percent_all/fp:-9.1f}% fp"
-        ).format(
-            epoch_ndx,
-            mode_str + '_all',
-            **metrics_dict,
+            metrics[METRICS_LOSS_IDX].mean(),
+            metrics_dict,
         ))
 
         self.initTensorboardWriters()
@@ -370,9 +350,7 @@ class Trainer:
 
         writer.flush()
 
-        score = metrics_dict['pr/recall']
-
-        return score
+        return metrics[METRICS_LOSS_IDX].mean()
 
 
 

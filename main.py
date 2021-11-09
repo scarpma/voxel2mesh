@@ -142,8 +142,10 @@ classifier = network(cfg.ndims, cfg.batch_size, cfg.num_input_channels,
                      cfg.graph_conv_layer_count, cfg.batch_norm, cfg)
 
 print("Load pre-processed data")
-trn_dset = SegmentationDataset(10, isValSet_bool=False)
-val_dset = SegmentationDataset(10, isValSet_bool=True)
+#trn_dset = SegmentationDataset(10, isValSet_bool=False)
+#val_dset = SegmentationDataset(10, isValSet_bool=True)
+trn_dset = SegmentationDataset(isValSet_bool=False, patient_name='A2')
+val_dset = SegmentationDataset(isValSet_bool=True, patient_name='A4')
 
 #print("Initialize evaluator")
 #evaluator = Evaluator(classifier, optimizer, data, trial_path, cfg, data_obj)
