@@ -497,15 +497,15 @@ def sample_outer_surface_in_voxel(volume):
     # surface = border + volume.float()
 
     # outer surface
-    a = F.max_pool3d(volume[None].float(),
+    a = F.max_pool3d(volume[None,None].float(),
                      kernel_size=(3, 1, 1),
                      stride=1,
                      padding=(1, 0, 0))[0]
-    b = F.max_pool3d(volume[None].float(),
+    b = F.max_pool3d(volume[None,None].float(),
                      kernel_size=(1, 3, 1),
                      stride=1,
                      padding=(0, 1, 0))[0]
-    c = F.max_pool3d(volume[None].float(),
+    c = F.max_pool3d(volume[None,None].float(),
                      kernel_size=(1, 1, 3),
                      stride=1,
                      padding=(0, 0, 1))[0]

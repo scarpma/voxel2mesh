@@ -131,7 +131,7 @@ def init(cfg):
     return trial_save_path, trial_id
 
 
-exp_id = 1
+exp_id = 0
 # Initialize
 cfg = load_config(exp_id)
 trial_path, trial_id = init(cfg)
