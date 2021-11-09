@@ -30,8 +30,9 @@ METRIC_CF_IDX   = 3 # chamfer distance
 METRIC_N_IDX    = 4 # normal consistency
 METRIC_E_IDX    = 5 # edge
 METRIC_LAP_IDX  = 6 # laplacian
+METRIC_DICE_IDX  = 7 # dice coef
 
-METRICS_SIZE = 7
+METRICS_SIZE = 8
 
 RUNS_DIR = '../voxel2meshRuns'
 
@@ -223,12 +224,15 @@ class Trainer:
 
         loss = 1 * chamfer_loss + 1 * ce_loss + 0.1 * laplacian_loss + 1 * edge_loss + 0.1 * normal_consistency_loss
 
+        dice_loss = - self.diceLoss(pred[0][-1][3][:,1]>0.5, data['y_voxels']).detach() + 1
+
         metrics[METRIC_LOSS_IDX,batch_idx] = loss.detach()
         metrics[METRIC_CF_IDX,batch_idx] = chamfer_loss.detach()
         metrics[METRIC_CE_IDX,batch_idx] = ce_loss.detach()
         metrics[METRIC_N_IDX,batch_idx] = normal_consistency_loss.detach()
         metrics[METRIC_E_IDX,batch_idx] = edge_loss.detach()
         metrics[METRIC_LAP_IDX,batch_idx] = laplacian_loss.detach()
+        metrics[METRIC_DICE_IDX,batch_idx] = dice_loss.detach()
 
         return loss
 
@@ -329,6 +333,7 @@ class Trainer:
         metrics_dict['normal/all'] = metrics[METRIC_N_IDX].mean()
         metrics_dict['edge/all'] = metrics[METRIC_E_IDX].mean()
         metrics_dict['laplacian/all'] = metrics[METRIC_LAP_IDX].mean()
+        metrics_dict['dice/all'] = metrics[METRIC_DICE_IDX].mean()
 
         print(("E{} {:8} "
                  + "{:.4f} loss, "
