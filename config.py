@@ -28,7 +28,7 @@ def load_config(exp_id):
     cfg.ndims = 3
     cfg.augmentation_shift_range = 10
     ''' Model '''
-    cfg.first_layer_channels = 16
+    cfg.first_layer_channels = 4 # 16
     cfg.num_input_channels = 1
     cfg.steps = 4
 

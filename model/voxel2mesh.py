@@ -22,6 +22,7 @@ from utils.utils_voxel2mesh.file_handle import read_obj
 from utils.utils_voxel2mesh.unpooling import uniform_unpool, adoptive_unpool
 
 from utils.utils_unet import UNetLayer
+import pyvista as pv
 
 
 class Voxel2Mesh(nn.Module):
@@ -137,8 +138,15 @@ class Voxel2Mesh(nn.Module):
                                      out_channels=num_classes,
                                      kernel_size=1)
 
-        sphere_path = './spheres/icosahedron_{}.obj'.format(162)
-        sphere_vertices, sphere_faces = read_obj(sphere_path)
+        #sphere_path = './spheres/icosahedron_{}.obj'.format(162)
+        #sphere_vertices, sphere_faces = read_obj(sphere_path)
+        sphere_path = './spheres/aorta_template_V2_proc.vtk'
+        m = pv.read(sphere_path)
+        sphere_vertices = m.points
+        sphere_faces = m.faces.reshape((-1,4))[:,1:]
+        del m
+        print(sphere_vertices, sphere_faces)
+
         sphere_vertices = torch.from_numpy(sphere_vertices).cuda().float()
         self.sphere_vertices = sphere_vertices / torch.sqrt(
             torch.sum(sphere_vertices**2, dim=1)[:, None])[None]

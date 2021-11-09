@@ -1,3 +1,4 @@
 cache_data/
 __pycache__/
 *.out
+.ipynb_checkpoints/

@@ -224,7 +224,7 @@ class Trainer:
 
         loss = 1 * chamfer_loss + 1 * ce_loss + 0.1 * laplacian_loss + 1 * edge_loss + 0.1 * normal_consistency_loss
 
-        dice_loss = - self.diceLoss(pred[0][-1][3][:,1]>0.5, data['y_voxels']).detach() + 1
+        dice_loss = - self.diceLoss(pred[0][-1][3][:,1]>THRESHOLD, data['y_voxels']).detach() + 1
 
         metrics[METRIC_LOSS_IDX,batch_idx] = loss.detach()
         metrics[METRIC_CF_IDX,batch_idx] = chamfer_loss.detach()
@@ -258,14 +258,14 @@ class Trainer:
             for slice_ndx in range(6):
                 n_slices = dl.dataset.n_slices
                 ct_ndx = slice_ndx * (n_slices - 1) // 5
-                sample_tup = dl.dataset.getitem_TrainingSample(patient_name, ct_ndx)
-
-                ct_t, label_t, patient_name, ct_ndx = sample_tup
+                sample = dl.dataset.getitem_TrainingSample(patient_name)
+                ct_t = sample['x'][0,ct_ndx]
+                label_t = sample['y_voxels'][ct_ndx]
 
                 input_g = ct_t.to(self.device).unsqueeze(0)
                 label_g = pos_g = label_t.to(self.device).unsqueeze(0)
 
-                prediction_g = self.segmentation_model(input_g)[0]
+                prediction_g = self.segmentation_model(sample)[0][-1][3][:,1]
                 prediction_a = prediction_g.to('cpu').detach().numpy()[0] > THRESHOLD
                 label_a = label_g.cpu().numpy()[0][0]
 
