@@ -102,7 +102,7 @@ class Trainer:
 
     def initTensorboardWriters(self):
         if self.trn_writer is None:
-            log_dir = os.path.join('runs', self.tb_prefix, self.time_str)
+            log_dir = os.path.join(RUNS_DIR, self.tb_prefix, self.time_str)
 
             self.trn_writer = SummaryWriter(
                 log_dir=log_dir + '_trn_seg_')
@@ -323,12 +323,12 @@ class Trainer:
         assert np.isfinite(metrics).all()
 
         metrics_dict = {}
-        metrics_dict['total_loss/all'] = metrics[METRICS_LOSS_IDX].mean()
-        metrics_dict['cross_entropy/all'] = metrics[METRICS_CE_IDX].mean()
-        metrics_dict['chamfer/all'] = metrics[METRICS_CF_IDX].mean()
-        metrics_dict['normal/all'] = metrics[METRICS_N_IDX].mean()
-        metrics_dict['edge/all'] = metrics[METRICS_E_IDX].mean()
-        metrics_dict['laplacian/all'] = metrics[METRICS_LAP_IDX].mean()
+        metrics_dict['total_loss/all'] = metrics[METRIC_LOSS_IDX].mean()
+        metrics_dict['cross_entropy/all'] = metrics[METRIC_CE_IDX].mean()
+        metrics_dict['chamfer/all'] = metrics[METRIC_CF_IDX].mean()
+        metrics_dict['normal/all'] = metrics[METRIC_N_IDX].mean()
+        metrics_dict['edge/all'] = metrics[METRIC_E_IDX].mean()
+        metrics_dict['laplacian/all'] = metrics[METRIC_LAP_IDX].mean()
 
         print(("E{} {:8} "
                  + "{:.4f} loss, "
@@ -336,7 +336,7 @@ class Trainer:
                   ).format(
             epoch_ndx,
             mode_str,
-            metrics[METRICS_LOSS_IDX].mean(),
+            metrics[METRIC_LOSS_IDX].mean(),
             metrics_dict,
         ))
 
@@ -350,7 +350,7 @@ class Trainer:
 
         writer.flush()
 
-        return metrics[METRICS_LOSS_IDX].mean()
+        return metrics[METRIC_LOSS_IDX].mean()
 
 
 

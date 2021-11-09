@@ -415,14 +415,14 @@ class SegmentationDataset(Dataset):
             assert patient_name in self.archive['name'].values
         else:
             self.patients_list = list(self.archive['name'].values)
+            if isValSet_bool:
+                assert val_stride > 0, val_stride
+                self.patients_list = self.patients_list[::val_stride]
+                assert self.patients_list
+            elif val_stride > 0:
+                del self.patients_list[::val_stride]
+                assert self.patients_list
 
-        if isValSet_bool:
-            assert val_stride > 0, val_stride
-            self.patients_list = self.patients_list[::val_stride]
-            assert self.patients_list
-        elif val_stride > 0:
-            del self.patients_list[::val_stride]
-            assert self.patients_list
 
         ## BUILD SAMPLE LIST, IE A LIST OF TUPLES (PATIENT_NAME, SLICE_IDX)
         ## FOR ALL SLICES FROM ALL PATIENT IN PATIENT_LIST
