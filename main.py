@@ -95,7 +95,7 @@ batch_size = 1
 epochs = 2000
 lr = 1.e-3
 
-run_name = 'prova1'
+run_name = 'sphere_600'
 
 #print(args)
 
