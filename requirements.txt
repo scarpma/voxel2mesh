@@ -14,7 +14,9 @@ conda install -c bottler nvidiacub
 conda install pytorch3d -c pytorch3d
 ###
 
-conda install scipy pandas && conda install -c simpleitk simpleitk && conda install -c conda-forge diskcache pyvista boltons tensorboard yapf opencv
+conda install scipy pandas ipython && \
+conda install -c simpleitk simpleitk && \
+conda install -c conda-forge diskcache pyvista boltons tensorboard yapf opencv notebook
 pip install future
 
 
