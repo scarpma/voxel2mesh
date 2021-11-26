@@ -7,6 +7,7 @@ conda install -c pytorch pytorch=1.7.1 torchvision cudatoolkit=10.2
 ## conda install -c pytorch pytorch=1.9.1=py3.8_cuda11.1_cudnn8.0.5_0
 ## ...
 ## pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py38_cu111_pyt191/download.html
+## pip install cupy-cuda111
 
 ### pytorch3d
 conda install -c fvcore -c iopath -c conda-forge fvcore iopath
